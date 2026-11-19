@@ -1,0 +1,393 @@
+{
+  "identifier": "yihui-dev-skillry-mcp",
+  "name": "Skillry MCP",
+  "version": "0.2.3",
+  "author": "Yihui",
+  "authorUrl": "https://github.com/yihui-dev",
+  "category": "developer",
+  "homepage": "https://skillry.dev/mcp",
+  "icon": "https://raw.githubusercontent.com/yihui-dev/skillry-mcp/main/assets/logo-400x400.png",
+  "description": "Search, preview, and install curated creative Agent Skills (slides, websites, images, launch videos) directly inside Claude Code, Codex, Cursor, VS Code, Gemini CLI, and Claude Desktop.",
+  "tags": [
+    "agent-skills",
+    "claude-code",
+    "cursor",
+    "codex",
+    "creative",
+    "slides",
+    "video"
+  ],
+  "localizations": [
+    {
+      "locale": "zh-CN",
+      "name": "Skillry MCP",
+      "description": "在 Claude Code、Codex、Cursor、VS Code、Gemini CLI 与 Claude Desktop 中直接搜索、预览并一键安装精选创意 Agent Skills（PPT、网站、图片、发布视频）。",
+      "tags": [
+        "Agent Skills",
+        "Claude Code",
+        "Cursor",
+        "创意技能",
+        "PPT",
+        "视频"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "search_skills",
+      "description": "Describe the desired output, not an input format, and pass outputType when clear. Use deliveryScope to distinguish a complete video from a component; pass avoidVoiceover, allowApiKeys and allowExternalCosts from explicit user constraints. Clarify missing purpose/content, inspect requirementReview, dependencies and costNotice before recommending. Defaults to keyword retrieval; hybrid requires explicit service configuration. Supports locale and nextOffset pagination. Search does not grant access or guarantee execution; never silently substitute a selected Skill.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "query": {
+            "default": "",
+            "type": "string",
+            "maxLength": 200
+          },
+          "outputType": {
+            "type": "string",
+            "enum": [
+              "html",
+              "image",
+              "video",
+              "presentation",
+              "game",
+              "other"
+            ]
+          },
+          "deliveryScope": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "component"
+            ]
+          },
+          "avoidVoiceover": {
+            "type": "boolean"
+          },
+          "allowApiKeys": {
+            "type": "boolean"
+          },
+          "allowExternalCosts": {
+            "type": "boolean"
+          },
+          "limit": {
+            "default": 5,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "offset": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "locale": {
+            "default": "en",
+            "type": "string",
+            "enum": [
+              "en",
+              "zh-CN",
+              "zh-TW",
+              "ja",
+              "ko",
+              "es",
+              "pt-BR",
+              "de",
+              "fr"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "get_skill",
+      "description": "Inspect a Skill before installing: preview page, published version, inputs, dependencies, external cost notes and outputs. Metadata does not grant package access.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "slug"
+        ]
+      }
+    },
+    {
+      "name": "account_status",
+      "description": "Check live membership using the browser-authorized local credential. Does not return tokens or personal identity.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "connect_account",
+      "description": "Begin browser authorization only when the user asks to connect. Returns a verification link immediately. Show the link and matching code; call connection_status after pollAfterSeconds. Repeated calls reuse the pending flow.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "connection_status",
+      "description": "Resume browser authorization without waiting in a tool call. Respect pollAfterSeconds. Reports pending, denied, expired or connected; never returns credentials.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "disconnect_account",
+      "description": "When the user asks to disconnect, cancel pending authorization, revoke the shared CLI/MCP credential and remove it from local credential storage. Reports whether server revocation succeeded.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "get_skill_access",
+      "description": "Check live access to one published Skill before downloading: free, member, purchased or purchase_required, correct purchase URL, daily quota and canDownload. Does not consume a download slot. Download rechecks all permissions.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "slug"
+        ]
+      }
+    },
+    {
+      "name": "list_installed_skills",
+      "description": "List installed Skills in an explicitly selected global or project directory. Only Skillry-managed installs have a recorded version; other installs are marked unmanaged. Reads metadata and never executes code.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "agent": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "codex",
+              "cursor",
+              "gemini-cli",
+              "opencode",
+              "claude-code",
+              "kimi-code",
+              "antigravity"
+            ]
+          },
+          "scope": {
+            "default": "global",
+            "type": "string",
+            "enum": [
+              "global",
+              "project"
+            ]
+          },
+          "projectDirectory": {
+            "type": "string",
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "agent"
+        ]
+      }
+    },
+    {
+      "name": "check_updates",
+      "description": "Check current published metadata for Skillry-managed local installations. Does not download, upgrade or consume quota. Select a result and use update_skill with its publishedVersion only after user approval.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "agent": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "codex",
+              "cursor",
+              "gemini-cli",
+              "opencode",
+              "claude-code",
+              "kimi-code",
+              "antigravity"
+            ]
+          },
+          "scope": {
+            "default": "global",
+            "type": "string",
+            "enum": [
+              "global",
+              "project"
+            ]
+          },
+          "projectDirectory": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "offset": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "limit": {
+            "default": 5,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          }
+        },
+        "required": [
+          "agent"
+        ]
+      }
+    },
+    {
+      "name": "update_skill",
+      "description": "Only after the user approves the selected published version, upgrade a Skillry-managed install. Requires expectedVersion from check_updates/get_skill. Preserves the entire old directory as a backup, including local edits. Does not execute the Skill.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "agent": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "codex",
+              "cursor",
+              "gemini-cli",
+              "opencode",
+              "claude-code",
+              "kimi-code",
+              "antigravity"
+            ]
+          },
+          "scope": {
+            "default": "global",
+            "type": "string",
+            "enum": [
+              "global",
+              "project"
+            ]
+          },
+          "projectDirectory": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "expectedVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "agent",
+          "slug",
+          "expectedVersion"
+        ]
+      }
+    },
+    {
+      "name": "download_skill",
+      "description": "After user selection, download a verified published Skill ZIP to an explicit absolute downloadDirectory without installing or executing it. Checks live permissions and quota. Existing files are never overwritten.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "downloadDirectory": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "expectedVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "slug",
+          "downloadDirectory"
+        ]
+      }
+    },
+    {
+      "name": "install_skill",
+      "description": "After user selection, download and install the current published Skill into the chosen local agent directory. Checks live entitlement and archive integrity. Does not execute the Skill or overwrite existing installs. Paid access failures include a purchase link.",
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "agent": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "codex",
+              "cursor",
+              "gemini-cli",
+              "opencode",
+              "claude-code",
+              "kimi-code",
+              "antigravity"
+            ]
+          },
+          "scope": {
+            "default": "global",
+            "type": "string",
+            "enum": [
+              "global",
+              "project"
+            ]
+          },
+          "projectDirectory": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "expectedVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "slug",
+          "agent"
+        ]
+      }
+    }
+  ]
+}
